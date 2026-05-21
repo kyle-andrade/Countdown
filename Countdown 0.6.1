@@ -1,0 +1,533 @@
+<!--/* Version 0.6.1*/-->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Holiday Countdown – Live + Options</title>
+  <style>
+    /* === PAGE LAYOUT === */
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f500;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      margin: 0;
+    }
+    /* === CONTROL CHECKBOXES === */
+    .controls {
+      margin: 15px 0;
+      text-align: center;
+      font-size: 16px;
+    }
+    .controls label {
+      margin: 0 15px;
+      font-weight: bold;
+      user-select: none;
+      cursor: pointer;
+    }
+    .controls input[type="checkbox"] {
+      margin-right: 6px;
+      transform: scale(1.2);
+    }
+    /* === MAIN COUNTDOWN BOX === */
+    #countdown-box {
+      font-size: 18px;
+      font-weight: bold;
+      text-align: center;
+      padding: 20px;
+      background: #787878;
+      border: 2px solid #4b4b4b;
+      border-radius: 12px;
+      display: inline-block;
+      min-width: 460px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      line-height: 2;
+      color: #fff;
+    }
+    /* === NEXT HOLIDAY BANNER === */
+    #next-holiday {
+      font-size: 22px;
+      color: #fff;
+      background: #cd1414;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    /* === EVENT ROWS === */
+    #events-container .event {
+      margin: 10px 0;
+      padding: 8px;
+      background: #ffffff;
+      border-radius: 6px;
+      color: #333;
+    }
+    #events-container .event span {
+      display: inline-block;
+      min-width: 50px;
+      color: #cd1414;
+      font-weight: bold;
+    }
+    .label {
+      color: #333;
+      font-weight: normal;
+      min-width: 160px;
+      text-align: left;
+    }
+    /* === MOBILE RESPONSIVENESS === */
+    @media (max-width: 500px) {
+      #countdown-box {
+        min-width: 300px;
+        font-size: 16px;
+      }
+      #events-container .event span {
+        min-width: 40px;
+      }
+      #next-holiday {
+        font-size: 18px;
+      }
+      .controls {
+        font-size: 14px;
+      }
+      .controls label {
+        display: block;
+        margin: 8px 0;
+      }
+    }
+  </style>
+  <style>
+  .flag-us {
+    display: inline-block;
+    width: 28px;
+    height: 28px;
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 741 390"><rect fill="%23B22234" width="741" height="390"/><path fill="%23FFF" d="M0 30h741v30H0zm0 60h741v30H0zm0 60h741v30H0zm0 60h741v30H0zm0 60h741v30H0zm0 60h741v30H0z"/><rect fill="%233C3B6E" width="296" height="210"/><g fill="%23FFF"><path d="M26 30h30v30H26zm60 0h30v30H86zm60 0h30v30H146zm60 0h30v30H206zm60 0h30v30H266zm60 0h30v30H326zm-300 60h30v30H26zm60 0h30v30H86zm60 0h30v30H146zm60 0h30v30H206zm60 0h30v30H266zm60 0h30v30H326zm-300 60h30v30H26zm60 0h30v30H86zm60 0h30v30H146zm60 0h30v30H206zm60 0h30v30H266zm60 0h30v30H326zm-300 60h30v30H26zm60 0h30v30H86zm60 0h30v30H146zm60 0h30v30H206zm60 0h30v30H266zm60 0h30v30H326z"/></g></svg>') center/contain no-repeat;
+    vertical-align: middle;
+    margin-left: 4px;
+    line-height: 1;
+    font-size: inherit;
+  }
+</style>
+</head>
+<body>
+  <!-- ============ CONTROLS ============ -->
+  <div class="controls">
+    <label><input type="checkbox" id="showDetails"> Show Details (Days, Hours, Minutes, Seconds)</label>
+    <label><input type="checkbox" id="chronoOrder"> Chronological Order</label>
+
+  </div>
+
+  <!-- ============ MAIN BOX ============ -->
+  <div id="countdown-box">
+    <div id="next-holiday">
+      Next Holiday: <span id="next-name">---</span> – <span id="next-count">---</span>
+    </div>
+    <div id="events-container"></div>
+  </div>
+
+  <script>
+    // ========== CONFIGURATION ==========
+    const EVENTS = [
+      {name:'NewYear', month:1, day:1, label:'New Year'},
+      {name:'GroundhogDay', month:2, day:2, label:'Groundhog Day'},
+      {name:'Valentines', month:2, day:14, label:"Valentine's Day"},
+      {name:'Presidents', month:2, day:0, type:'thirdMonday', label:"Presidents Day"},
+      {name:'StPatricks', month:3, day:17, label:"St. Patrick's Day"},
+      {name:'Easter', month:0, day:0, type:'easter', label:'Easter'},
+      {name:'FallenFirefighterMemorialWeekend', month:5, day:0, type:'firstWeekendMay', label:'National Fallen Firefighter Memorial Weekend'}, // new
+      {name:'MothersDay', month:5, day:0, type:'secondSunday', label:"Mother's Day"},
+      {name:'PeaceOfficerMemorialDay', month:5, day:15, label:'National Peace Officer Memorial Day'}, // new
+      {name:'ArmedForces', month:5, day:0, type:'thirdSaturday', label:'Armed Forces Day'},
+      {name:'Memorial', month:5, day:0, type:'lastMonday', label:'Memorial Day'},
+      {name:'Flag', month:6, day:14, label:'Flag Day'},
+      {name:'FathersDay', month:6, day:0, type:'thirdSunday', label:"Father's Day"},
+      {name:'Independence', month:7, day:4, label:'Independence Day'},
+      {name:'LaborDay', month:9, day:0, type:'firstMonday', label:'Labor Day'},
+      {name:'Patriot', month:9, day:11, label:'Patriot Day'},
+      {name:'ColumbusDay', month:10, day:0, type:'secondMonday', label:'Columbus Day'},
+      {name:'Halloween', month:10, day:31, label:'Halloween'},
+      {name:'Veterans', month:11, day:11, label:'Veterans Day'},
+      {name:'Thanksgiving', month:11, day:0, type:'fourthThursday', label:'Thanksgiving'},
+      {name:'BlackFriday', month:11, day:0, type:'dayAfterThanksgiving', label:'Black Friday'},
+      {name:'PearlHarborRememberance', month:12, day:7, label:'Pearl Harbor Remembrance Day'},
+      {name:'Christmas', month:12, day:25, label:'Christmas'},
+    ];
+
+    // ========== HELPER FUNCTIONS ==========
+    function secondSunday(y, m) {
+      const first = new Date(y, m-1, 1);
+      const dow = first.getDay();
+      const toSun = (dow === 0) ? 0 : (8 - dow) % 7;
+      return 8 + toSun;
+    }
+
+    function thirdSunday(y, m) {
+      const first = new Date(y, m-1, 1);
+      const dow = first.getDay();
+      const toSun = (dow === 0) ? 0 : (8 - dow) % 7;
+      return 15 + toSun;
+    }
+
+    function firstMonday(y, m) {
+      const first = new Date(y, m-1, 1);
+      const dow = first.getDay();
+      const toMon = (dow === 1) ? 0 : (8 - dow) % 7;
+      return 1 + toMon;
+    }
+
+    function secondMonday(y, m) {
+      const first = new Date(y, m-1, 1);
+      const dow = first.getDay();
+      const toMon = (dow === 1) ? 0 : (8 - dow) % 7;
+      return 8 + toMon;
+    }
+
+    function thirdMonday(y, m) {
+      const first = new Date(y, m-1, 1);
+      const dow = first.getDay();
+      const toMon = (dow === 1) ? 0 : (8 - dow) % 7;
+      return 15 + toMon;
+    }
+
+    function lastMonday(y, m) {
+      const lastDay = new Date(y, m, 0);
+      const dow = lastDay.getDay();
+      const daysBack = (dow + 6) % 7;
+      return lastDay.getDate() - daysBack;
+    }
+
+    function fourthThursday(y, m) {
+      const first = new Date(y, m-1, 1);
+      const dow = first.getDay();
+      const toThu = (dow === 4) ? 0 : (11 - dow) % 7;
+      return 22 + toThu;
+    }
+
+    function thirdSaturday(y, m) {
+      const first = new Date(y, m-1, 1);
+      const dow = first.getDay();
+      const toSat = (dow === 6) ? 0 : (13 - dow) % 7;
+      return 15 + toSat;
+    }
+    function easterSunday(y) {
+      const a = y % 19;
+      const b = Math.floor(y / 100);
+      const c = y % 100;
+      const d = Math.floor(b / 4);
+      const e = b % 4;
+      const f = Math.floor((b + 8) / 25);
+      const g = Math.floor((b - f + 1) / 3);
+      const h = (19 * a + b - d - g + 15) % 30;
+      const i = Math.floor(c / 4);
+      const k = c % 4;
+      const l = (32 + 2 * e + 2 * i - h - k) % 7;
+      const m = Math.floor((a + 11 * h + 22 * l) / 451);
+      const month = Math.floor((h + l - 7 * m + 114) / 31);
+      const day = ((h + l - 7 * m + 114) % 31) + 1;
+      return new Date(y, month - 1, day);
+    }
+
+    function firstWeekendMay(y) {
+      const first = new Date(y, 4, 1); // May 1
+      const dow = first.getDay();
+
+      // Find first Saturday in May
+      const toSat = (6 - dow + 7) % 7;
+      const saturdayDate = 1 + toSat;
+
+      return new Date(y, 4, saturdayDate);
+    }
+
+    function getTargetDate(ev, year) {
+      if (ev.type === 'easter') return easterSunday(year);
+      if (ev.type === 'firstWeekendMay') return firstWeekendMay(year);
+      if (ev.type === 'thirdMonday') return new Date(year, ev.month - 1, thirdMonday(year, ev.month));
+      if (ev.type === 'thirdSaturday') return new Date(year, ev.month - 1, thirdSaturday(year, ev.month));
+      if (ev.type === 'lastMonday') return new Date(year, ev.month - 1, lastMonday(year, ev.month));
+      if (ev.type === 'fourthThursday') return new Date(year, ev.month - 1, fourthThursday(year, ev.month));
+      if (ev.type === 'secondSunday') return new Date(year, ev.month - 1, secondSunday(year, ev.month));
+      if (ev.type === 'thirdSunday') return new Date(year, ev.month - 1, thirdSunday(year, ev.month));
+      if (ev.type === 'firstMonday') return new Date(year, ev.month - 1, firstMonday(year, ev.month));
+      if (ev.type === 'secondMonday') return new Date(year, ev.month - 1, secondMonday(year, ev.month));
+      if (ev.type === 'dayAfterThanksgiving') {
+        const thx = getTargetDate({type:'fourthThursday', month:11}, year);
+        return new Date(thx.getTime() + 24*60*60*1000);
+      }
+      return new Date(year, ev.month - 1, ev.day);
+    }
+
+    function nextEventDate(ev) {
+      const now = new Date();
+      const thisYear = now.getFullYear();
+      let target = getTargetDate(ev, thisYear);
+      if (now >= target) target = getTargetDate(ev, thisYear + 1);
+      return target;
+    }
+
+    /*
+    function isTodayHoliday(ev, year) {
+      const target = getTargetDate(ev, year);
+      const now = new Date();
+      return now.getFullYear() === target.getFullYear() &&
+             now.getMonth() === target.getMonth() &&
+             now.getDate() === target.getDate();
+    }
+    */
+
+    function isTodayHoliday(ev, year) {
+      const target = getTargetDate(ev, year);
+      const now = new Date();
+
+      // Special handling for National Fallen Firefighter Memorial Weekend
+      if (ev.type === 'firstWeekendMay') {
+
+        const sunday = new Date(target);
+        sunday.setDate(target.getDate() + 1);
+
+        const isSaturday =
+          now.getFullYear() === target.getFullYear() &&
+          now.getMonth() === target.getMonth() &&
+          now.getDate() === target.getDate();
+
+        const isSunday =
+          now.getFullYear() === sunday.getFullYear() &&
+          now.getMonth() === sunday.getMonth() &&
+          now.getDate() === sunday.getDate();
+
+        return isSaturday || isSunday;
+      }
+
+      return (
+        now.getFullYear() === target.getFullYear() &&
+        now.getMonth() === target.getMonth() &&
+        now.getDate() === target.getDate()
+      );
+    }
+
+    function formatFullCountdown(d, h, m, s) {
+      return `${d} Days, ${h} Hours, ${m} Minutes, ${s} Seconds`;
+    }
+
+    const ROW_DAYS_ONLY = ({name, label, days}) => `
+      <div class="event">
+        <span class="label">${label} :</span>
+        <span id="${name}_d">${days}</span> Days
+      </div>`;
+
+    const ROW_FULL = ({name, label, d, h, m, s}) => `
+      <div class="event">
+        <span class="label">${label} :</span>
+        <span id="${name}_d">${d}</span> Days,
+        <span id="${name}_h">${h}</span> Hours,
+        <span id="${name}_m">${m}</span> Minutes,
+        <span id="${name}_s">${s}</span> Seconds
+      </div>`;
+
+    // ========== MAIN UPDATE FUNCTION ==========
+    function updateAll() {
+    const now = Date.now();
+    const thisYear = new Date().getFullYear();
+    const container = document.getElementById('events-container');
+    const showDetails = document.getElementById('showDetails').checked;
+    const chronoOrder = document.getElementById('chronoOrder').checked;
+
+    const rows = [];
+
+    // --- Calculate all future events ---
+    EVENTS.forEach(ev => {
+        const target = nextEventDate(ev).getTime();
+        const diff = target - now;
+        let d = '000', h = '00', m = '00', s = '00';
+        if (diff > 0) {
+        d = String(Math.floor(diff / (1000*60*60*24))).padStart(3,'0');
+        h = String(Math.floor((diff % (1000*60*60*24)) / (1000*60*60))).padStart(2,'0');
+        m = String(Math.floor((diff % (1000*60*60)) / (1000*60))).padStart(2,'0');
+        s = String(Math.floor((diff % (1000*60)) / 1000)).padStart(2,'0');
+        }
+        rows.push({ev, diff, d, h, m, s, target});
+    });
+
+    // --- Find soonest future holiday ---
+    const soonest = rows.reduce((min, r) => (!min || r.diff < min.diff) ? r : min, null);
+
+    // --- Check if TODAY is a holiday ---
+    const todayHoliday = EVENTS.filter(ev => isTodayHoliday(ev, thisYear));
+
+    const banner = document.getElementById('next-holiday');
+
+    /*
+    if (todayHoliday.length > 0) {
+        const emojiMap = {
+        'New Year': '🎉',
+        'Groundhog Day': '🦫',
+        "Valentine's Day": '❤️',
+        'Presidents Day': '<span class="flag-us"></span>',
+        "St. Patrick's Day": '🍀',
+        'Easter': '🐰',
+        'National Fallen Firefighter Memorial Weekend': '👨‍🚒',
+        "Mother's Day": '❤️',
+        'National Peace Officer Memorial Day': '👮',
+        'Armed Forces Day': '🎖️',
+        'Memorial Day': '🌹',
+        'Flag Day': '<span class="flag-us"></span>',
+        "Father's Day": '💙',
+        'Independence Day': '<span class="flag-us"></span>🎆<span class="flag-us"></span>',
+        'Labor Day': '<span class="flag-us"></span>',
+        'Patriot Day': '<span class="flag-us"></span>',
+        'Columbus Day': '⛵',
+        'Halloween': '🎃',
+        'Veterans Day': '🎖️',
+        'Thanksgiving': '🦃',
+        'Black Friday': '🦃',
+        'Pearl Harbor Remembrance Day': '<span class="flag-us"></span>',
+        'Christmas': '🎄',
+        };
+        
+        const emoji = emojiMap[todayHoliday.label] || '🎉';
+        if (todayHoliday.label === 'Christmas')
+        {
+            banner.innerHTML = `Merry&nbsp;${todayHoliday.label}! ${emoji}`;
+        } else if ( todayHoliday.label === 'New Year' ||
+                    todayHoliday.label === 'Groundhog Day' ||
+                    todayHoliday.label === "Valentine's Day" ||
+                    todayHoliday.label === 'Presidents Day' ||
+                    todayHoliday.label === "St. Patrick's Day" ||
+                    todayHoliday.label === 'Easter' ||
+                    todayHoliday.label === "Mother's Day" ||
+                    todayHoliday.label === 'Armed Forces Day' ||
+                    todayHoliday.label === 'Flag Day' ||
+                    todayHoliday.label === "Father's Day" ||
+                    todayHoliday.label === 'Independence Day' ||
+                    todayHoliday.label === 'Labor Day' ||
+                    todayHoliday.label === 'Columbus Day' ||
+                    todayHoliday.label === 'Thanksgiving' ||
+                    todayHoliday.label === 'Black Friday' ||
+                    todayHoliday.label === 'Halloween'
+                    ) {
+        banner.innerHTML = `Happy&nbsp;${todayHoliday.label}! ${emoji}`;
+        } else if (todayHoliday.label === 'Memorial Day') {
+            banner.innerHTML = `Remembering and Honoring the fallen&nbsp;${todayHoliday.label}! ${emoji}`;
+        } else if (todayHoliday.label === 'Patriot Day') {
+            banner.innerHTML = `United We Stand&nbsp;${todayHoliday.label}. ${emoji}`;
+        } else if (todayHoliday.label === 'Veterans Day') {
+            banner.innerHTML = `Thank you for your service. Happy&nbsp;${todayHoliday.label}! ${emoji}`;
+        } else if (todayHoliday.label === 'Pearl Harbor Remembrance Day' ||
+                  todayHoliday.label === 'National Fallen Firefighter Memorial Weekend' ||
+                  todayHoliday.label === 'National Peace Officer Memorial Day'
+                  ) {
+            banner.innerHTML = `Honoring&nbsp;${todayHoliday.label}! ${emoji}`;
+        }
+    } */
+   if (todayHoliday.length > 0) {
+
+        const emojiMap = {
+            'New Year': '🎉',
+            'Groundhog Day': '🦫',
+            "Valentine's Day": '❤️',
+            'Presidents Day': '<span class="flag-us"></span>',
+            "St. Patrick's Day": '🍀',
+            'Easter': '🐰',
+            'National Fallen Firefighter Memorial Weekend': '👨‍🚒',
+            "Mother's Day": '❤️',
+            'National Peace Officer Memorial Day': '👮',
+            'Armed Forces Day': '🎖️',
+            'Memorial Day': '🌹',
+            'Flag Day': '<span class="flag-us"></span>',
+            "Father's Day": '💙',
+            'Independence Day': '<span class="flag-us"></span>🎆<span class="flag-us"></span>',
+            'Labor Day': '<span class="flag-us"></span>',
+            'Patriot Day': '<span class="flag-us"></span>',
+            'Columbus Day': '⛵',
+            'Halloween': '🎃',
+            'Veterans Day': '🎖️',
+            'Thanksgiving': '🦃',
+            'Black Friday': '🛍️',
+            'Pearl Harbor Remembrance Day': '<span class="flag-us"></span>',
+            'Christmas': '🎄',
+        };
+
+        const holidayMessages = [];
+
+        todayHoliday.forEach(holiday => {
+
+            const emoji = emojiMap[holiday.label] || '🎉';
+
+            if (holiday.label === 'Christmas') {
+                holidayMessages.push(`Merry ${holiday.label}! ${emoji}`);
+            }
+
+            else if (
+                holiday.label === 'Pearl Harbor Remembrance Day' ||
+                holiday.label === 'National Fallen Firefighter Memorial Weekend' ||
+                holiday.label === 'National Peace Officer Memorial Day'
+            ) {
+                holidayMessages.push(`Honoring ${holiday.label}! ${emoji}`);
+            }
+
+            else if (holiday.label === 'Memorial Day') {
+                holidayMessages.push(`Remembering and Honoring the Fallen ${holiday.label}! ${emoji}`);
+            }
+
+            else if (holiday.label === 'Veterans Day') {
+                holidayMessages.push(`Thank You for Your Service — Happy ${holiday.label}! ${emoji}`);
+            }
+
+            else if (holiday.label === 'Patriot Day') {
+                holidayMessages.push(`United We Stand ${holiday.label}. ${emoji}`);
+            }
+
+            else {
+                holidayMessages.push(`Happy ${holiday.label}! ${emoji}`);
+            }
+        });
+
+        banner.innerHTML = holidayMessages.join('<br>');
+    } else if (soonest && soonest.diff > 0) {
+        const bannerText = showDetails
+        ? formatFullCountdown(soonest.d, soonest.h, soonest.m, soonest.s)
+        : `${String(Number(soonest.d) + 1).padStart(3, '0')} Days`;
+        banner.innerHTML = `Next Observance:&nbsp${soonest.ev.label} – ${bannerText}`;
+    } else {
+        banner.textContent = '—';
+    }
+
+    // --- Sort and render list ---
+    let displayRows = [...rows];
+    if (chronoOrder) {
+        displayRows.sort((a, b) => {
+        const dateA = getTargetDate(a.ev, thisYear);
+        const dateB = getTargetDate(b.ev, thisYear);
+        const monthDiff = dateA.getMonth() - dateB.getMonth();
+        if (monthDiff !== 0) return monthDiff;
+        return dateA.getDate() - dateB.getDate();
+        });
+    } else {
+        displayRows.sort((a, b) => a.diff - b.diff);
+    }
+
+    const template = showDetails ? ROW_FULL : ROW_DAYS_ONLY;
+    container.innerHTML = displayRows.map(r => template({
+        name: r.ev.name,
+        label: r.ev.label,
+        d: r.d, h: r.h, m: r.m, s: r.s,
+        days: showDetails ? r.d : String(Number(r.d) + 1).padStart(3, '0')
+    })).join('');
+    }
+
+    // ========== EVENT LISTENERS ==========
+    document.getElementById('showDetails').addEventListener('change', updateAll);
+    document.getElementById('chronoOrder').addEventListener('change', updateAll);
+
+    // ========== START ==========
+    updateAll();
+    setInterval(updateAll, 1000);
+  </script>
+</body>
+</html>
